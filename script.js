@@ -1,17 +1,12 @@
 // ============ CONFIGURAÇÃO ============
-// 🔴 SUBSTITUA esta URL pela URL do SEU BACK-END na Vercel!
-const API_URL = 'https://backend-desafio-leitura.vercel.app/';  // <--- MUDE AQUI!
-
-// Se for testar local, descomente a linha abaixo e comente a de cima
-// const API_URL = 'http://localhost:3000';
-
-console.log('🔗 API conectando em:', API_URL);
+const API_URL = 'https://backend-desafio-leitura.vercel.app';
+console.log('🚀 API:', API_URL);
 
 let currentUser = null;
 let currentUserData = null;
 let weeklyChart = null;
 
-// Alunos cadastrados
+// Alunos
 let alunosCadastrados = JSON.parse(localStorage.getItem('alunos')) || {
     '12345': { nome: 'Ana Silva', turma: '3A', rm: '12345', criadoEm: new Date().toISOString() },
     '67890': { nome: 'Bruno Souza', turma: '3B', rm: '67890', criadoEm: new Date().toISOString() },
@@ -22,7 +17,7 @@ function salvarAlunos() {
     localStorage.setItem('alunos', JSON.stringify(alunosCadastrados));
 }
 
-// ============ ELEMENTOS DOM ============
+// Elementos DOM
 const authScreen = document.getElementById('authScreen');
 const dashboardScreen = document.getElementById('dashboardScreen');
 const tabLoginBtn = document.getElementById('tabLoginBtn');
@@ -62,6 +57,27 @@ const perfilSince = document.getElementById('perfilSince');
 
 const rankingContainer = document.getElementById('rankingContainer');
 
+// ============ FUNÇÃO DE REQUISIÇÃO (usa query string) ============
+async function apiRequest(endpoint, options = {}) {
+    // Adiciona o RM como query string
+    const separator = endpoint.includes('?') ? '&' : '?';
+    const url = `${API_URL}${endpoint}${separator}rm=${currentUser}`;
+    
+    console.log(`📡 ${options.method || 'GET'} ${url}`);
+    
+    const response = await fetch(url, {
+        ...options,
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    });
+    
+    const data = await response.json();
+    console.log('📡 Resposta:', data);
+    
+    return { response, data };
+}
+
 // ============ AUTENTICAÇÃO ============
 tabLoginBtn.addEventListener('click', () => {
     tabLoginBtn.classList.add('active');
@@ -79,7 +95,7 @@ tabRegisterBtn.addEventListener('click', () => {
     authError.classList.add('hidden');
 });
 
-doRegisterBtn.addEventListener('click', async () => {
+doRegisterBtn.addEventListener('click', () => {
     const nome = regNome.value.trim();
     const rm = regRm.value.trim();
     const turma = regTurma.value;
@@ -94,19 +110,16 @@ doRegisterBtn.addEventListener('click', async () => {
         return;
     }
     
-    alunosCadastrados[rm] = {
-        nome, turma, rm,
-        criadoEm: new Date().toISOString()
-    };
+    alunosCadastrados[rm] = { nome, turma, rm, criadoEm: new Date().toISOString() };
     salvarAlunos();
     
     currentUser = rm;
     currentUserData = alunosCadastrados[rm];
     localStorage.setItem('currentUser', rm);
-    await entrarNoDashboard();
+    entrarNoDashboard();
 });
 
-doLoginBtn.addEventListener('click', async () => {
+doLoginBtn.addEventListener('click', () => {
     const rm = loginRm.value.trim();
     
     if (!rm) {
@@ -122,7 +135,7 @@ doLoginBtn.addEventListener('click', async () => {
     currentUser = rm;
     currentUserData = alunosCadastrados[rm];
     localStorage.setItem('currentUser', rm);
-    await entrarNoDashboard();
+    entrarNoDashboard();
 });
 
 function mostrarAuthError(msg) {
@@ -131,7 +144,7 @@ function mostrarAuthError(msg) {
     setTimeout(() => authError.classList.add('hidden'), 3000);
 }
 
-async function entrarNoDashboard() {
+function entrarNoDashboard() {
     authScreen.classList.add('hidden');
     dashboardScreen.classList.remove('hidden');
     
@@ -143,7 +156,7 @@ async function entrarNoDashboard() {
     perfilTurma.textContent = currentUserData.turma;
     perfilSince.textContent = new Date(currentUserData.criadoEm).toLocaleDateString();
     
-    await carregarTodosDados();
+    carregarTodosDados();
     iniciarAbas();
 }
 
@@ -161,18 +174,18 @@ function iniciarAbas() {
     const contents = document.querySelectorAll('.tab-content');
     
     tabs.forEach(tab => {
-        tab.addEventListener('click', () => {
+        tab.onclick = () => {
             const tabId = tab.getAttribute('data-tab');
             tabs.forEach(t => t.classList.remove('active'));
             tab.classList.add('active');
             contents.forEach(c => c.classList.add('hidden'));
             document.getElementById(`tab${tabId.charAt(0).toUpperCase() + tabId.slice(1)}`).classList.remove('hidden');
-        });
+        };
     });
 }
 
-// ============ REGISTRO DE LEITURA ============
-submitReadingBtn.addEventListener('click', async () => {
+// ============ REGISTRO ============
+submitReadingBtn.onclick = async () => {
     const minutos = parseInt(registerMinutes.value);
     
     if (!minutos || minutos <= 0) {
@@ -185,45 +198,37 @@ submitReadingBtn.addEventListener('click', async () => {
         return;
     }
     
+    mostrarAlerta('📡 Enviando...', 'info');
+    
     try {
-        const response = await fetch(`${API_URL}/api/leitura/registrar`, {
+        const { response, data } = await apiRequest('/api/leitura/registrar', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'rm': currentUser },
             body: JSON.stringify({ minutos })
         });
         
-        const data = await response.json();
-        
         if (response.ok) {
-            mostrarAlerta(data.message, 'success');
+            mostrarAlerta('✅ ' + data.message, 'success');
             registerMinutes.value = '';
-            await carregarTodosDados();
+            carregarTodosDados();
         } else {
-            mostrarAlerta(data.error, 'error');
+            mostrarAlerta('❌ ' + (data.error || 'Erro'), 'error');
         }
     } catch (error) {
-        console.error('Erro:', error);
-        mostrarAlerta('Erro ao conectar com o servidor', 'error');
+        mostrarAlerta('❌ Erro: ' + error.message, 'error');
     }
-});
+};
 
 // ============ CARREGAR DADOS ============
 async function carregarTodosDados() {
-    await Promise.all([
-        carregarProgressoUsuario(),
-        carregarTermometro(),
-        carregarRanking(),
-        carregarLimiteDiario()
-    ]);
+    await carregarTermometro();
+    await carregarRanking();
+    await carregarProgressoUsuario();
+    await carregarLimiteDiario();
 }
 
 async function carregarProgressoUsuario() {
     try {
-        const response = await fetch(`${API_URL}/api/leitura/progresso`, {
-            headers: { 'rm': currentUser }
-        });
-        
-        const data = await response.json();
+        const { response, data } = await apiRequest('/api/leitura/progresso');
         
         if (response.ok && data.progresso) {
             const registros = data.progresso;
@@ -278,46 +283,34 @@ async function carregarProgressoUsuario() {
                     }
                 }
             });
+        } else if (data.error === 'Aluno não encontrado') {
+            console.warn('Aluno não encontrado no Supabase');
         }
     } catch (error) {
-        console.error('Erro carregar progresso:', error);
+        console.error('Erro:', error);
     }
 }
 
 async function carregarTermometro() {
     try {
-        const response = await fetch(`${API_URL}/api/leitura/termometro`, {
-            headers: { 'rm': currentUser }
-        });
-        
+        const response = await fetch(`${API_URL}/api/leitura/termometro`);
         const data = await response.json();
-        
-        if (response.ok) {
-            const total = data.total_escola;
-            const percent = (total / 1000000) * 100;
-            schoolTotal.textContent = total.toLocaleString();
-            schoolBar.style.width = `${Math.min(percent, 100)}%`;
-            schoolPercent.textContent = percent.toFixed(2);
-        }
+        const total = data.total_escola || 0;
+        const percent = (total / 1000000) * 100;
+        schoolTotal.textContent = total.toLocaleString();
+        schoolBar.style.width = `${Math.min(percent, 100)}%`;
+        schoolPercent.textContent = percent.toFixed(2);
     } catch (error) {
-        console.error('Erro carregar termômetro:', error);
+        console.error('Erro:', error);
     }
 }
 
 async function carregarRanking() {
     try {
-        const response = await fetch(`${API_URL}/api/leitura/ranking`, {
-            headers: { 'rm': currentUser }
-        });
-        
+        const response = await fetch(`${API_URL}/api/leitura/ranking`);
         const data = await response.json();
         
-        if (response.ok && Array.isArray(data)) {
-            if (data.length === 0) {
-                rankingContainer.innerHTML = '<div class="text-center py-8 text-gray-400">Nenhum registro ainda</div>';
-                return;
-            }
-            
+        if (Array.isArray(data) && data.length > 0) {
             rankingContainer.innerHTML = data.map((item, index) => `
                 <div class="ranking-item flex items-center justify-between">
                     <div class="flex items-center gap-3">
@@ -332,19 +325,17 @@ async function carregarRanking() {
                     </div>
                 </div>
             `).join('');
+        } else {
+            rankingContainer.innerHTML = '<div class="text-center py-8 text-gray-400">Nenhum registro ainda</div>';
         }
     } catch (error) {
-        console.error('Erro carregar ranking:', error);
+        console.error('Erro:', error);
     }
 }
 
 async function carregarLimiteDiario() {
     try {
-        const response = await fetch(`${API_URL}/api/leitura/progresso`, {
-            headers: { 'rm': currentUser }
-        });
-        
-        const data = await response.json();
+        const { response, data } = await apiRequest('/api/leitura/progresso');
         
         if (response.ok && data.progresso) {
             const hoje = new Date().toISOString().split('T')[0];
@@ -364,18 +355,22 @@ async function carregarLimiteDiario() {
             submitReadingBtn.style.opacity = disabled ? '0.5' : '1';
         }
     } catch (error) {
-        console.error('Erro carregar limite:', error);
+        console.error('Erro:', error);
     }
 }
 
 function mostrarAlerta(msg, tipo) {
     readingAlert.classList.remove('hidden');
-    readingAlert.className = `mt-4 p-3 rounded-xl text-sm ${tipo === 'success' ? 'bg-green-500/20 text-green-300 border border-green-500/30' : 'bg-red-500/20 text-red-300 border border-red-500/30'}`;
-    readingAlert.innerHTML = `<i class="fas fa-${tipo === 'success' ? 'check-circle' : 'exclamation-circle'} mr-2"></i> ${msg}`;
+    readingAlert.className = `mt-4 p-3 rounded-xl text-sm ${
+        tipo === 'success' ? 'bg-green-500/20 text-green-300 border border-green-500/30' :
+        tipo === 'info' ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' :
+        'bg-red-500/20 text-red-300 border border-red-500/30'
+    }`;
+    readingAlert.innerHTML = msg;
     setTimeout(() => readingAlert.classList.add('hidden'), 4000);
 }
 
-// Verificar login salvo
+// Inicialização
 window.addEventListener('load', () => {
     const savedUser = localStorage.getItem('currentUser');
     if (savedUser && alunosCadastrados[savedUser]) {
