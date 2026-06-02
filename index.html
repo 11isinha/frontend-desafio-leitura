@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Leitura SESI | Desafio 1M</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0a1628 0%, #0d1b2a 50%, #1b263b 100%);
+            position: relative;
+            min-height: 100vh;
+        }
+        
+        /* Elementos decorativos */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: radial-gradient(circle at 20% 40%, rgba(220, 38, 38, 0.08) 1px, transparent 1px);
+            background-size: 50px 50px;
+            pointer-events: none;
+        }
+        
+        body::after {
+            content: '';
+            position: fixed;
+            top: -50%;
+            right: -20%;
+            width: 80%;
+            height: 80%;
+            background: radial-gradient(circle, rgba(220, 38, 38, 0.05), transparent);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+        
+        /* Animações */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+        }
+        
+        @keyframes glowRed {
+            0%, 100% { box-shadow: 0 0 20px rgba(220, 38, 38, 0.2); }
+            50% { box-shadow: 0 0 40px rgba(220, 38, 38, 0.4); }
+        }
+        
+        @keyframes pulseBlue {
+            0%, 100% { border-color: rgba(30, 58, 138, 0.3); }
+            50% { border-color: rgba(220, 38, 38, 0.5); }
+        }
+        
+        .animate-up {
+            animation: fadeInUp 0.6s ease-out;
+        }
+        
+        .animate-float {
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        /* Cards com tema escuro */
+        .card-dark {
+            background: rgba(15, 25, 45, 0.9);
+            backdrop-filter: blur(12px);
+            border-radius: 24px;
+            border: 1px solid rgba(55, 65, 81, 0.3);
+            transition: all 0.4s cubic-bezier(0.2, 0, 0, 1);
+        }
+        
+        .card-dark:hover {
+            transform: translateY(-4px);
+            border-color: rgba(220, 38, 38, 0.3);
+            box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.4);
+        }
+        
+        /* Inputs */
+        .input-modern {
+            background: rgba(30, 41, 59, 0.8);
+            border: 1.5px solid rgba(71, 85, 105, 0.5);
+            border-radius: 14px;
+            transition: all 0.2s;
+            color: white;
+        }
+        
+        .input-modern:focus {
+            outline: none;
+            border-color: #dc2626;
+            box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.15);
+            background: rgba(30, 41, 59, 1);
+        }
+        
+        .input-modern::placeholder {
+            color: rgba(156, 163, 175, 0.6);
+        }
+        
+        select.input-modern option {
+            background: #1e293b;
+            color: white;
+        }
+        
+        /* Botões */
+        .btn-primary {
+            background: linear-gradient(135deg, #1e3a5f 0%, #0f172a 100%);
+            border: 1px solid rgba(220, 38, 38, 0.3);
+            border-radius: 14px;
+            transition: all 0.3s;
+            font-weight: 600;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            border-color: #dc2626;
+            box-shadow: 0 8px 20px -5px rgba(220, 38, 38, 0.3);
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+            border-radius: 14px;
+            transition: all 0.3s;
+            font-weight: 600;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px -5px rgba(220, 38, 38, 0.5);
+        }
+        
+        /* Progress bars */
+        .progress-bar {
+            background: rgba(51, 65, 85, 0.5);
+            border-radius: 100px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            background: linear-gradient(90deg, #dc2626, #ef4444);
+            border-radius: 100px;
+            transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+        
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            animation: shimmer 2s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        
+        /* Tabs */
+        .tab-item {
+            position: relative;
+            padding: 12px 0;
+            font-weight: 500;
+            transition: all 0.2s;
+            color: #94a3b8;
+        }
+        
+        .tab-item.active {
+            color: #ef4444;
+        }
+        
+        .tab-item.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #dc2626, #ef4444);
+            border-radius: 2px;
+        }
+        
+        /* Ranking items */
+        .ranking-item {
+            transition: all 0.3s;
+            border-radius: 14px;
+            padding: 14px;
+            background: rgba(30, 41, 59, 0.4);
+            border: 1px solid rgba(71, 85, 105, 0.2);
+        }
+        
+        .ranking-item:hover {
+            background: rgba(220, 38, 38, 0.1);
+            border-color: rgba(220, 38, 38, 0.3);
+            transform: translateX(6px);
+        }
+        
+        /* Stats cards */
+        .stat-card {
+            background: rgba(30, 41, 59, 0.6);
+            backdrop-filter: blur(8px);
+            border-radius: 20px;
+            border: 1px solid rgba(71, 85, 105, 0.3);
+            transition: all 0.3s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(220, 38, 38, 0.4);
+            background: rgba(30, 41, 59, 0.8);
+        }
+        
+        /* Badge */
+        .badge-modern {
+            background: rgba(220, 38, 38, 0.15);
+            color: #ef4444;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            border: 1px solid rgba(220, 38, 38, 0.3);
+        }
+        
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
+            border-radius: 10px;
+        }
+        
+        /* Header */
+        .header-dark {
+            background: rgba(15, 25, 45, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(220, 38, 38, 0.2);
+        }
+        
+        /* Logo */
+        .logo-red {
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
+            animation: glowRed 3s ease-in-out infinite;
+        }
+        
+        /* Textos com gradiente vermelho */
+        .text-gradient-red {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        /* Cards internos */
+        .inner-card {
+            background: rgba(30, 41, 59, 0.4);
+            border-radius: 16px;
+            border: 1px solid rgba(71, 85, 105, 0.3);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- TELA DE LOGIN -->
+    <div id="authScreen" class="fixed inset-0 flex items-center justify-center p-4 z-50">
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+        <div class="relative max-w-md w-full animate-up">
+            <!-- Logo -->
+            <div class="text-center mb-8 animate-float">
+                <div class="w-20 h-20 logo-red rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-xl">
+                    <i class="fas fa-book-open text-white text-3xl"></i>
+                </div>
+                <h1 class="text-3xl font-bold text-white tracking-tight">Desafio da Leitura</h1>
+                <p class="text-blue-200 text-sm mt-2">SESI · 1 Milhão de Minutos</p>
+            </div>
+
+            <!-- Card -->
+            <div class="card-dark overflow-hidden shadow-xl">
+                <!-- Tabs -->
+                <div class="flex border-b border-gray-700/50">
+                    <button id="tabLoginBtn" class="tab-item flex-1 py-4 text-center font-semibold active">
+                        Acessar
+                    </button>
+                    <button id="tabRegisterBtn" class="tab-item flex-1 py-4 text-center font-semibold">
+                        Cadastrar
+                    </button>
+                </div>
+
+                <!-- Login Form -->
+                <div id="loginForm" class="p-6">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-semibold text-blue-200 mb-2">RM do Aluno</label>
+                            <input type="text" id="loginRm" placeholder="Digite seu RM" 
+                                   class="input-modern w-full px-4 py-3">
+                        </div>
+                        <button id="doLoginBtn" class="btn-primary w-full py-3">
+                            <i class="fas fa-arrow-right mr-2"></i> Entrar
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Register Form -->
+                <div id="registerForm" class="p-6 hidden">
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-sm font-semibold text-blue-200 mb-2">Nome completo</label>
+                            <input type="text" id="regNome" placeholder="Seu nome" 
+                                   class="input-modern w-full px-4 py-3">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-blue-200 mb-2">RM</label>
+                            <input type="text" id="regRm" placeholder="Ex: 12345" 
+                                   class="input-modern w-full px-4 py-3">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-blue-200 mb-2">Turma</label>
+                            <select id="regTurma" class="input-modern w-full px-4 py-3">
+                                <option value="">Selecione</option>
+                                <option value="1A">1º Ano A</option>
+                                <option value="1B">1º Ano B</option>
+                                <option value="2A">2º Ano A</option>
+                                <option value="2B">2º Ano B</option>
+                                <option value="3A">3º Ano A</option>
+                                <option value="3B">3º Ano B</option>
+                                <option value="4A">4º Ano A</option>
+                                <option value="4B">4º Ano B</option>
+                            </select>
+                        </div>
+                        <button id="doRegisterBtn" class="btn-primary w-full py-3">
+                            <i class="fas fa-user-plus mr-2"></i> Criar conta
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="authError" class="mt-4 text-center text-sm text-red-400 hidden"></div>
+        </div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div id="dashboardScreen" class="hidden min-h-screen">
+        
+        <!-- Header -->
+        <header class="header-dark sticky top-0 z-30">
+            <div class="max-w-6xl mx-auto px-4 sm:px-6 py-4">
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 logo-red rounded-xl flex items-center justify-center">
+                            <i class="fas fa-book-open text-white text-sm"></i>
+                        </div>
+                        <span class="font-bold text-white text-lg">Leitura SESI</span>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <div class="text-right">
+                            <p id="dashboardUserName" class="text-sm font-semibold text-white">Carregando...</p>
+                            <p id="dashboardUserClass" class="text-xs text-blue-300">Turma</p>
+                        </div>
+                        <button id="dashboardLogoutBtn" class="text-gray-400 hover:text-red-400 transition">
+                            <i class="fas fa-sign-out-alt"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Tabs -->
+        <div class="bg-black/40 backdrop-blur-sm border-b border-red-900/30 sticky top-[73px] z-20">
+            <div class="max-w-6xl mx-auto px-4 sm:px-6">
+                <div class="flex gap-6 overflow-x-auto">
+                    <button data-tab="registro" class="tab-item whitespace-nowrap active">
+                        <i class="fas fa-book mr-2"></i> Registrar
+                    </button>
+                    <button data-tab="progresso" class="tab-item whitespace-nowrap">
+                        <i class="fas fa-chart-line mr-2"></i> Progresso
+                    </button>
+                    <button data-tab="ranking" class="tab-item whitespace-nowrap">
+                        <i class="fas fa-trophy mr-2"></i> Ranking
+                    </button>
+                    <button data-tab="perfil" class="tab-item whitespace-nowrap">
+                        <i class="fas fa-user mr-2"></i> Perfil
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <main class="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+            
+            <!-- TAB 1: REGISTRO -->
+            <div id="tabRegistro" class="tab-content animate-up">
+                <div class="card-dark p-6">
+                    <div class="mb-6">
+                        <h2 class="text-2xl font-bold text-gradient-red">
+                            Registrar leitura
+                        </h2>
+                        <p class="text-gray-400 text-sm mt-1">Limite de 16 minutos por dia para manter o hábito</p>
+                    </div>
+                    
+                    <!-- Progresso diário -->
+                    <div class="inner-card p-5 mb-6">
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="text-sm font-medium text-gray-300">Progresso de hoje</span>
+                            <div class="flex items-baseline gap-1">
+                                <span id="todayMin" class="text-3xl font-bold text-red-500">0</span>
+                                <span class="text-sm text-gray-400">/ 16 min</span>
+                            </div>
+                        </div>
+                        <div class="progress-bar h-3 mb-3">
+                            <div id="dailyBar" class="progress-fill h-full" style="width: 0%"></div>
+                        </div>
+                        <p class="text-sm text-gray-400">
+                            <i class="fas fa-hourglass-half text-red-500 mr-1"></i>
+                            Faltam <span id="remainingToday" class="font-bold text-red-500">16</span> minutos
+                        </p>
+                    </div>
+                    
+                    <!-- Input -->
+                    <div class="flex gap-3">
+                        <input type="number" id="registerMinutes" placeholder="Minutos lidos" 
+                               class="input-modern flex-1 px-4 py-3">
+                        <button id="submitReadingBtn" class="btn-secondary px-8 py-3">
+                            <i class="fas fa-check mr-2"></i> Registrar
+                        </button>
+                    </div>
+                    
+                    <div id="readingAlert" class="mt-4 hidden text-sm"></div>
+                </div>
+            </div>
+
+            <!-- TAB 2: PROGRESSO -->
+            <div id="tabProgresso" class="tab-content hidden animate-up">
+                <div class="grid md:grid-cols-2 gap-5">
+                    <!-- Gráfico -->
+                    <div class="card-dark p-5">
+                        <h3 class="font-bold text-white mb-4 flex items-center gap-2">
+                            <i class="fas fa-chart-line text-red-500"></i>
+                            Leitura semanal
+                        </h3>
+                        <div class="h-64">
+                            <canvas id="weeklyProgressChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <!-- Meta -->
+                    <div class="card-dark p-5">
+                        <h3 class="font-bold text-white mb-4 flex items-center gap-2">
+                            <i class="fas fa-bullseye text-red-500"></i>
+                            Meta da escola
+                        </h3>
+                        <div class="text-center">
+                            <div class="text-4xl font-bold text-red-500 mb-1">
+                                <span id="schoolTotal">0</span>
+                            </div>
+                            <p class="text-xs text-gray-400 mb-4">de 1.000.000 minutos</p>
+                            <div class="progress-bar h-3 mb-2">
+                                <div id="schoolBar" class="progress-fill h-full" style="width: 0%"></div>
+                            </div>
+                            <p class="text-sm font-bold text-red-500">
+                                <span id="schoolPercent">0</span>% concluído
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Stats -->
+                <div class="grid sm:grid-cols-3 gap-4 mt-5">
+                    <div class="stat-card p-4 text-center">
+                        <i class="fas fa-calendar-week text-2xl text-red-500 mb-2"></i>
+                        <div class="text-2xl font-bold text-white" id="totalWeek">0</div>
+                        <p class="text-xs text-gray-400 mt-1">minutos na semana</p>
+                    </div>
+                    <div class="stat-card p-4 text-center">
+                        <i class="fas fa-fire text-2xl text-red-500 mb-2"></i>
+                        <div class="text-2xl font-bold text-white" id="bestDay">0</div>
+                        <p class="text-xs text-gray-400 mt-1">melhor dia</p>
+                    </div>
+                    <div class="stat-card p-4 text-center">
+                        <i class="fas fa-trophy text-2xl text-red-500 mb-2"></i>
+                        <div class="text-2xl font-bold text-white" id="daysHit">0</div>
+                        <p class="text-xs text-gray-400 mt-1">dias com 16min</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 3: RANKING -->
+            <div id="tabRanking" class="tab-content hidden animate-up">
+                <div class="card-dark p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold text-gradient-red">
+                            <i class="fas fa-trophy mr-2"></i> Ranking das turmas
+                        </h2>
+                        <span class="badge-modern">Competição saudável</span>
+                    </div>
+                    <div id="rankingContainer" class="space-y-2">
+                        <div class="text-center py-8 text-gray-400">
+                            <i class="fas fa-spinner fa-spin text-red-500 text-2xl"></i>
+                            <p class="text-sm mt-2">Carregando ranking...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 4: PERFIL -->
+            <div id="tabPerfil" class="tab-content hidden animate-up">
+                <div class="card-dark p-6">
+                    <div class="flex items-center gap-5 mb-6">
+                        <div class="w-20 h-20 logo-red rounded-2xl flex items-center justify-center shadow-lg">
+                            <i class="fas fa-user text-white text-3xl"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-2xl font-bold text-white" id="perfilNome">-</h2>
+                            <p class="text-gray-400 text-sm mt-1">RM <span id="perfilRm">-</span></p>
+                        </div>
+                    </div>
+                    
+                    <div class="grid sm:grid-cols-2 gap-5">
+                        <div class="inner-card p-4">
+                            <label class="text-xs font-semibold text-red-500 uppercase tracking-wide">Turma</label>
+                            <p class="text-white font-bold text-lg mt-1" id="perfilTurma">-</p>
+                        </div>
+                        <div class="inner-card p-4">
+                            <label class="text-xs font-semibold text-red-500 uppercase tracking-wide">Total lido</label>
+                            <p class="text-3xl font-bold text-red-500 mt-1" id="perfilTotal">0</p>
+                            <span class="text-xs text-gray-400">minutos</span>
+                        </div>
+                        <div class="inner-card p-4 sm:col-span-2">
+                            <label class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Membro desde</label>
+                            <p class="text-white font-medium mt-1" id="perfilSince">-</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
