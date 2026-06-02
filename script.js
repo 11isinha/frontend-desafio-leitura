@@ -1,10 +1,17 @@
-// CONFIGURAÇÃO
-const API_URL = 'http://localhost:3000';
+// ============ CONFIGURAÇÃO ============
+// 🔴 SUBSTITUA esta URL pela URL do SEU BACK-END na Vercel!
+const API_URL = 'https://backend-desafio-leitura.vercel.app/';  // <--- MUDE AQUI!
+
+// Se for testar local, descomente a linha abaixo e comente a de cima
+// const API_URL = 'http://localhost:3000';
+
+console.log('🔗 API conectando em:', API_URL);
+
 let currentUser = null;
 let currentUserData = null;
 let weeklyChart = null;
 
-// Dados dos alunos
+// Alunos cadastrados
 let alunosCadastrados = JSON.parse(localStorage.getItem('alunos')) || {
     '12345': { nome: 'Ana Silva', turma: '3A', rm: '12345', criadoEm: new Date().toISOString() },
     '67890': { nome: 'Bruno Souza', turma: '3B', rm: '67890', criadoEm: new Date().toISOString() },
@@ -15,7 +22,7 @@ function salvarAlunos() {
     localStorage.setItem('alunos', JSON.stringify(alunosCadastrados));
 }
 
-// Elementos DOM
+// ============ ELEMENTOS DOM ============
 const authScreen = document.getElementById('authScreen');
 const dashboardScreen = document.getElementById('dashboardScreen');
 const tabLoginBtn = document.getElementById('tabLoginBtn');
@@ -55,7 +62,7 @@ const perfilSince = document.getElementById('perfilSince');
 
 const rankingContainer = document.getElementById('rankingContainer');
 
-// Autenticação
+// ============ AUTENTICAÇÃO ============
 tabLoginBtn.addEventListener('click', () => {
     tabLoginBtn.classList.add('active');
     tabRegisterBtn.classList.remove('active');
@@ -164,7 +171,7 @@ function iniciarAbas() {
     });
 }
 
-// Registro de leitura
+// ============ REGISTRO DE LEITURA ============
 submitReadingBtn.addEventListener('click', async () => {
     const minutos = parseInt(registerMinutes.value);
     
@@ -195,11 +202,12 @@ submitReadingBtn.addEventListener('click', async () => {
             mostrarAlerta(data.error, 'error');
         }
     } catch (error) {
+        console.error('Erro:', error);
         mostrarAlerta('Erro ao conectar com o servidor', 'error');
     }
 });
 
-// Carregar dados
+// ============ CARREGAR DADOS ============
 async function carregarTodosDados() {
     await Promise.all([
         carregarProgressoUsuario(),
@@ -249,13 +257,15 @@ async function carregarProgressoUsuario() {
                     labels: diasSemana,
                     datasets: [{
                         data: minutosPorDia,
-                        borderColor: '#3b82f6',
-                        backgroundColor: 'rgba(59, 130, 246, 0.05)',
-                        borderWidth: 2,
+                        borderColor: '#ef4444',
+                        backgroundColor: 'rgba(239, 68, 68, 0.05)',
+                        borderWidth: 2.5,
                         fill: true,
                         tension: 0.3,
-                        pointRadius: 3,
-                        pointBackgroundColor: '#3b82f6'
+                        pointRadius: 4,
+                        pointBackgroundColor: '#dc2626',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2
                     }]
                 },
                 options: {
@@ -263,14 +273,14 @@ async function carregarProgressoUsuario() {
                     maintainAspectRatio: true,
                     plugins: { legend: { display: false } },
                     scales: {
-                        y: { beginAtZero: true, grid: { color: '#f0f2f5' }, ticks: { color: '#88909a' } },
-                        x: { grid: { display: false }, ticks: { color: '#88909a' } }
+                        y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#94a3b8' } },
+                        x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
                     }
                 }
             });
         }
     } catch (error) {
-        console.error('Erro:', error);
+        console.error('Erro carregar progresso:', error);
     }
 }
 
@@ -290,11 +300,10 @@ async function carregarTermometro() {
             schoolPercent.textContent = percent.toFixed(2);
         }
     } catch (error) {
-        console.error('Erro:', error);
+        console.error('Erro carregar termômetro:', error);
     }
 }
 
-// Função carregarRanking() - atualize esta parte
 async function carregarRanking() {
     try {
         const response = await fetch(`${API_URL}/api/leitura/ranking`, {
@@ -312,12 +321,7 @@ async function carregarRanking() {
             rankingContainer.innerHTML = data.map((item, index) => `
                 <div class="ranking-item flex items-center justify-between">
                     <div class="flex items-center gap-3">
-                        <span class="w-8 text-lg font-bold ${
-                            index === 0 ? 'text-yellow-400' : 
-                            index === 1 ? 'text-gray-300' : 
-                            index === 2 ? 'text-orange-400' : 
-                            'text-gray-400'
-                        }">
+                        <span class="w-8 text-lg font-bold ${index === 0 ? 'text-yellow-400' : index === 1 ? 'text-gray-300' : index === 2 ? 'text-orange-400' : 'text-gray-400'}">
                             ${index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}º`}
                         </span>
                         <span class="font-semibold text-white">Turma ${item.turma}</span>
@@ -360,18 +364,18 @@ async function carregarLimiteDiario() {
             submitReadingBtn.style.opacity = disabled ? '0.5' : '1';
         }
     } catch (error) {
-        console.error('Erro:', error);
+        console.error('Erro carregar limite:', error);
     }
 }
 
 function mostrarAlerta(msg, tipo) {
     readingAlert.classList.remove('hidden');
-    readingAlert.className = `mt-4 p-3 rounded-xl text-sm ${tipo === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`;
-    readingAlert.innerHTML = msg;
+    readingAlert.className = `mt-4 p-3 rounded-xl text-sm ${tipo === 'success' ? 'bg-green-500/20 text-green-300 border border-green-500/30' : 'bg-red-500/20 text-red-300 border border-red-500/30'}`;
+    readingAlert.innerHTML = `<i class="fas fa-${tipo === 'success' ? 'check-circle' : 'exclamation-circle'} mr-2"></i> ${msg}`;
     setTimeout(() => readingAlert.classList.add('hidden'), 4000);
 }
 
-// Inicializar
+// Verificar login salvo
 window.addEventListener('load', () => {
     const savedUser = localStorage.getItem('currentUser');
     if (savedUser && alunosCadastrados[savedUser]) {
